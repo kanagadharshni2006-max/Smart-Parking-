@@ -30,30 +30,30 @@
                     <div class="col-lg-7">
                         <div class="glass p-5 fade-in">
                             <h2 class="mb-4">Booking <span class="text-gradient">Details</span></h2>
-                            <form>
+                            <form id="booking-form">
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small">Vehicle Number</label>
-                                        <input type="text" class="form-control-custom w-100" placeholder="NY-1234-AB">
+                                        <input type="text" id="vehicle_number" class="form-control-custom w-100" placeholder="NY-1234-AB" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small">Vehicle Model</label>
-                                        <input type="text" class="form-control-custom w-100" placeholder="Tesla Model 3">
+                                        <input type="text" id="vehicle_model" class="form-control-custom w-100" placeholder="Tesla Model 3" required>
                                     </div>
                                 </div>
 
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small">Arrival Time</label>
-                                        <input type="time" class="form-control-custom w-100">
+                                        <input type="time" id="arrival_time" class="form-control-custom w-100" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label text-muted small">Duration (Hours)</label>
-                                        <select class="form-control-custom w-100">
-                                            <option>1 Hour</option>
-                                            <option>2 Hours</option>
-                                            <option>3 Hours</option>
-                                            <option>Full Day</option>
+                                        <select id="duration" class="form-control-custom w-100">
+                                            <option value="1">1 Hour</option>
+                                            <option value="2">2 Hours</option>
+                                            <option value="3">3 Hours</option>
+                                            <option value="24">Full Day</option>
                                         </select>
                                     </div>
                                 </div>
@@ -91,7 +91,7 @@
                             
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Selected Slot</span>
-                                <span class="fw-bold text-primary">A-05</span>
+                                <span class="fw-bold text-primary" id="display-slot-num">A-05</span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Floor</span>
@@ -128,5 +128,53 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const slotId = urlParams.get('slot_id');
+        const slotNum = urlParams.get('slot_num');
+
+        if (!slotId) {
+            window.location.href = 'slots.html';
+        }
+
+        document.getElementById('display-slot-num').innerText = slotNum;
+
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                slot_id: slotId,
+                vehicle_number: document.getElementById('vehicle_number').value,
+                vehicle_model: document.getElementById('vehicle_model').value,
+                arrival_time: document.getElementById('arrival_time').value,
+                duration: document.getElementById('duration').value
+            };
+
+            try {
+                const response = await fetch('api/book_slot.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Your parking slot has been booked.',
+                        icon: 'success',
+                        confirmButtonText: 'Great!'
+                    }).then(() => {
+                        window.location.href = 'slots.html';
+                    });
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Something went wrong!', 'error');
+            }
+        });
+    </script>
 </body>
 </html>

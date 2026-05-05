@@ -20,10 +20,10 @@
                 <i class="fas fa-parking text-gradient me-2"></i>SmartPark
             </a>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto" id="nav-links">
                     <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
                     <li class="nav-item"><a class="nav-link active" href="slots.html">Find Slots</a></li>
-                    <li class="nav-item"><a class="nav-link" href="auth.html">Logout</a></li>
+                    <li class="nav-item" id="auth-link"><a class="nav-link" href="auth.html">Login</a></li>
                 </ul>
             </div>
         </div>
@@ -98,29 +98,58 @@
     <script>
         const slotContainer = document.getElementById('slot-container');
         const proceedBtn = document.getElementById('proceed-btn');
-        let selectedSlot = null;
+        let selectedSlotId = null;
 
-        // Generate mock slots
-        for (let i = 1; i <= 32; i++) {
-            const slot = document.createElement('div');
-            const status = i % 7 === 0 ? 'occupied' : (i % 5 === 0 ? 'reserved' : 'available');
-            slot.className = `glass slot ${status} fade-in`;
-            slot.style.animationDelay = `${i * 0.02}s`;
-            slot.innerHTML = `
-                <i class="fas fa-car"></i>
-                <span class="small fw-bold">A-${i < 10 ? '0' + i : i}</span>
-            `;
+        async function loadSlots() {
+            try {
+                const response = await fetch('api/get_slots.php');
+                const slots = await response.json();
+                
+                slotContainer.innerHTML = '';
+                slots.forEach((slot, index) => {
+                    const slotDiv = document.createElement('div');
+                    const statusClass = slot.status.toLowerCase();
+                    slotDiv.className = `glass slot ${statusClass} fade-in`;
+                    slotDiv.style.animationDelay = `${index * 0.02}s`;
+                    slotDiv.innerHTML = `
+                        <i class="fas fa-car"></i>
+                        <span class="small fw-bold">${slot.slot_number}</span>
+                    `;
 
-            if (status === 'available') {
-                slot.onclick = () => {
-                    if (selectedSlot) selectedSlot.classList.remove('selected');
-                    slot.classList.add('selected');
-                    selectedSlot = slot;
-                    proceedBtn.classList.remove('d-none');
-                };
+                    if (slot.status === 'Available') {
+                        slotDiv.onclick = () => {
+                            document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+                            slotDiv.classList.add('selected');
+                            selectedSlotId = slot.id;
+                            proceedBtn.classList.remove('d-none');
+                            proceedBtn.href = `booking.html?slot_id=${slot.id}&slot_num=${slot.slot_number}`;
+                        };
+                    }
+                    slotContainer.appendChild(slotDiv);
+                });
+            } catch (error) {
+                console.error('Error loading slots:', error);
             }
-            slotContainer.appendChild(slot);
         }
+
+        async function checkAuth() {
+            const resp = await fetch('api/auth.php?action=check');
+            const user = await resp.json();
+            
+            if (user.logged_in) {
+                const authLink = document.getElementById('auth-link');
+                authLink.innerHTML = `<a class="nav-link" href="history.html">My Bookings</a>`;
+                
+                const nav = document.getElementById('nav-links');
+                nav.insertAdjacentHTML('beforeend', `<li class="nav-item"><a class="nav-link text-danger" href="api/auth.php?action=logout">Logout</a></li>`);
+                
+                if (user.role === 'Admin') {
+                    nav.insertAdjacentHTML('afterbegin', `<li class="nav-item"><a class="nav-link text-warning" href="admin/dashboard.php">Admin Panel</a></li>`);
+                }
+            }
+        }
+        checkAuth();
+        loadSlots();
     </script>
 </body>
 </html>
