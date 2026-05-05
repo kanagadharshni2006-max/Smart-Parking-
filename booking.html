@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Booking | SmartPark</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg scrolled">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-parking text-gradient me-2"></i>SmartPark
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-5 mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="row g-5">
+                    <!-- Booking Form -->
+                    <div class="col-lg-7">
+                        <div class="glass p-5 fade-in">
+                            <h2 class="mb-4">Booking <span class="text-gradient">Details</span></h2>
+                            <form>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small">Vehicle Number</label>
+                                        <input type="text" class="form-control-custom w-100" placeholder="NY-1234-AB">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small">Vehicle Model</label>
+                                        <input type="text" class="form-control-custom w-100" placeholder="Tesla Model 3">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small">Arrival Time</label>
+                                        <input type="time" class="form-control-custom w-100">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-muted small">Duration (Hours)</label>
+                                        <select class="form-control-custom w-100">
+                                            <option>1 Hour</option>
+                                            <option>2 Hours</option>
+                                            <option>3 Hours</option>
+                                            <option>Full Day</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <hr class="opacity-10 my-4">
+
+                                <h4 class="mb-4">Payment Method</h4>
+                                <div class="d-flex gap-3 mb-5">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer border-primary">
+                                        <i class="fab fa-cc-visa fs-3 mb-2"></i>
+                                        <div class="small">Credit Card</div>
+                                    </div>
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer">
+                                        <i class="fab fa-apple-pay fs-3 mb-2"></i>
+                                        <div class="small">Apple Pay</div>
+                                    </div>
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer">
+                                        <i class="fab fa-google-pay fs-3 mb-2"></i>
+                                        <div class="small">Google Pay</div>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary-custom w-100">Confirm & Pay $15.00</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Booking Summary -->
+                    <div class="col-lg-5">
+                        <div class="glass p-5 fade-in" style="animation-delay: 0.1s;">
+                            <h3 class="mb-4">Summary</h3>
+                            <div class="hero-img-container mb-4">
+                                <img src="assets/img/hero-bg.png" alt="Selected Slot" class="img-fluid rounded shadow">
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Selected Slot</span>
+                                <span class="fw-bold text-primary">A-05</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Floor</span>
+                                <span class="fw-bold">Basement 1</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Base Rate</span>
+                                <span class="fw-bold">$10.00/hr</span>
+                            </div>
+                            
+                            <hr class="opacity-10 my-4">
+                            
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Subtotal</span>
+                                <span>$10.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="text-muted">Service Fee</span>
+                                <span>$5.00</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center bg-white bg-opacity-10 p-3 rounded">
+                                <h4 class="mb-0">Total</h4>
+                                <h4 class="mb-0 text-gradient">$15.00</h4>
+                            </div>
+
+                            <p class="text-muted small mt-4">
+                                <i class="fas fa-info-circle me-2"></i>You can cancel your booking up to 30 minutes before arrival.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

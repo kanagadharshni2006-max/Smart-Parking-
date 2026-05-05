@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPark | Future of Urban Parking</title>
+    <meta name="description" content="Experience the next generation of smart parking. Book, track, and pay for parking slots in real-time.">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-parking text-gradient me-2"></i>Smart<span class="text-gradient">Park</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="slots.html">Find Slots</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="auth.html">Login</a></li>
+                    <li class="nav-item ms-lg-3">
+                        <a href="auth.html" class="btn btn-primary-custom">Get Started</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero d-flex align-items-center">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6 fade-in">
+                    <h1 class="display-3 mb-4">Parking Made <span class="text-gradient">Intelligent.</span></h1>
+                    <p class="lead text-muted mb-5">Revolutionize your parking experience with real-time availability, seamless booking, and contactless payments. Your spot is just a click away.</p>
+                    <div class="d-flex gap-3">
+                        <a href="slots.html" class="btn btn-primary-custom">Book a Slot</a>
+                        <a href="#features" class="btn btn-outline-custom">Learn More</a>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-5 mt-lg-0 fade-in" style="animation-delay: 0.2s;">
+                    <div class="hero-img-container glass p-3">
+                        <img src="assets/img/hero-bg.png" alt="Smart Parking Future" class="img-fluid rounded">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-100">
+        <div class="container">
+            <div class="text-center mb-5 fade-in">
+                <h2 class="display-5">Why Choose <span class="text-gradient">SmartPark?</span></h2>
+                <p class="text-muted">Cutting-edge technology for a stress-free parking experience.</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4 fade-in" style="animation-delay: 0.1s;">
+                    <div class="glass feature-card glass-hover text-center">
+                        <i class="fas fa-bolt feature-icon"></i>
+                        <h3>Instant Booking</h3>
+                        <p class="text-muted">Reserve your spot in seconds from anywhere, anytime.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-in" style="animation-delay: 0.2s;">
+                    <div class="glass feature-card glass-hover text-center">
+                        <i class="fas fa-map-marker-alt feature-icon"></i>
+                        <h3>Real-time Tracking</h3>
+                        <p class="text-muted">Live map updates showing exactly which slots are free.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 fade-in" style="animation-delay: 0.3s;">
+                    <div class="glass feature-card glass-hover text-center">
+                        <i class="fas fa-shield-alt feature-icon"></i>
+                        <h3>Secure Payments</h3>
+                        <p class="text-muted">Encryption-backed payments for a worry-free transaction.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-5 glass mt-5">
+        <div class="container text-center">
+            <a class="navbar-brand mb-4 d-block" href="#">
+                <i class="fas fa-parking text-gradient me-2"></i>SmartPark
+            </a>
+            <p class="text-muted mb-4">Building the future of urban mobility.</p>
+            <div class="d-flex justify-content-center gap-4 mb-4">
+                <a href="#" class="text-muted"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-muted"><i class="fab fa-facebook"></i></a>
+                <a href="#" class="text-muted"><i class="fab fa-instagram"></i></a>
+            </div>
+            <p class="text-muted small mb-0">&copy; 2026 SmartPark. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) {
+                document.querySelector('.navbar').classList.add('scrolled');
+            } else {
+                document.querySelector('.navbar').classList.remove('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>
