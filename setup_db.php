@@ -24,6 +24,7 @@ $sql_slots = "CREATE TABLE IF NOT EXISTS slots (
     floor VARCHAR(10) NOT NULL,
     status ENUM('Available', 'Booked', 'Reserved') DEFAULT 'Available',
     vehicle_type ENUM('Car', 'Motorcycle') DEFAULT 'Car',
+    price_per_hour DECIMAL(10, 2) DEFAULT 15.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 
@@ -33,11 +34,12 @@ if ($conn->query($sql_slots) === TRUE) {
     echo "Error creating table 'slots': " . $conn->error . "<br>";
 }
 
-// Create bookings table (updated to include user_id)
+// Create bookings table
 $sql_bookings = "CREATE TABLE IF NOT EXISTS bookings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     slot_id INT NOT NULL,
+    reference_id VARCHAR(20) UNIQUE,
     vehicle_number VARCHAR(20) NOT NULL,
     vehicle_model VARCHAR(50),
     arrival_time TIME NOT NULL,
@@ -67,11 +69,17 @@ if ($check_admin->num_rows == 0) {
 $check_slots = $conn->query("SELECT COUNT(*) as count FROM slots");
 $row = $check_slots->fetch_assoc();
 if ($row['count'] == 0) {
-    for ($i = 1; $i <= 32; $i++) {
-        $slot_num = "A-" . ($i < 10 ? "0$i" : $i);
-        $conn->query("INSERT INTO slots (slot_number, floor, status) VALUES ('$slot_num', 'B1', 'Available')");
+    $floors = ['B1', 'B2', 'B3'];
+    foreach ($floors as $floor) {
+        for ($i = 1; $i <= 12; $i++) {
+            $slot_num = $floor . "-" . ($i < 10 ? "0$i" : $i);
+            $v_type = ($i > 8) ? 'Motorcycle' : 'Car';
+            $price = ($v_type == 'Motorcycle') ? 10.00 : 15.00;
+            $conn->query("INSERT INTO slots (slot_number, floor, status, vehicle_type, price_per_hour) 
+                          VALUES ('$slot_num', '$floor', 'Available', '$v_type', $price)");
+        }
     }
-    echo "Seeded 32 slots.<br>";
+    echo "Seeded 36 slots across 3 floors.<br>";
 }
 
 echo "<br>Database setup complete. <a href='index.html'>Go to Home</a>";

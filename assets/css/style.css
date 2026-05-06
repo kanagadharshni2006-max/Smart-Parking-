@@ -236,3 +236,62 @@ h1, h2, h3, h4, h5 {
 .fade-in {
     animation: fadeIn 0.8s ease forwards;
 }
+
+/* New UI Enhancements */
+.ticket-qr {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    display: inline-block;
+    margin: 20px 0;
+}
+
+.stats-card {
+    border-left: 4px solid var(--primary);
+    transition: var(--transition);
+}
+
+.stats-card:hover {
+    border-left-width: 8px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.slot.motorcycle i {
+    transform: rotate(-15deg);
+}
+
+.slot .price-tag {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+.floor-btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+
+.floor-btn.active {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+}
+
+/* Modal Styling */
+.modal-content.glass {
+    background: rgba(15, 16, 25, 0.95);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(20px);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--glass-border);
+}

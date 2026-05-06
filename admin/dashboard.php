@@ -45,28 +45,54 @@ $recent_bookings = $conn->query("SELECT b.*, u.name as user_name, s.slot_number
 
     <div class="container py-5 mt-5">
         <div class="row g-4 mb-5">
-            <div class="col-md-4">
-                <div class="glass p-4 text-center">
-                    <h1 class="text-gradient"><?php echo $total_slots; ?></h1>
-                    <p class="text-muted mb-0">Total Slots</p>
+            <div class="col-md-3">
+                <div class="glass p-4 stats-card">
+                    <p class="text-muted small mb-1">Total Slots</p>
+                    <h2 class="text-gradient mb-0"><?php echo $total_slots; ?></h2>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="glass p-4 text-center">
-                    <h1 class="text-gradient"><?php echo $booked_slots; ?></h1>
-                    <p class="text-muted mb-0">Currently Booked</p>
+            <div class="col-md-3">
+                <div class="glass p-4 stats-card" style="border-color: #ffaa00;">
+                    <p class="text-muted small mb-1">Booked Slots</p>
+                    <h2 class="mb-0" style="color: #ffaa00;"><?php echo $booked_slots; ?></h2>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="glass p-4 text-center">
-                    <h1 class="text-gradient"><?php echo $total_users; ?></h1>
-                    <p class="text-muted mb-0">Total Users</p>
+            <div class="col-md-3">
+                <div class="glass p-4 stats-card" style="border-color: #00ff88;">
+                    <p class="text-muted small mb-1">Total Revenue</p>
+                    <h2 class="mb-0" style="color: #00ff88;">₹<span id="stat-revenue">0</span></h2>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="glass p-4 stats-card" style="border-color: var(--secondary);">
+                    <p class="text-muted small mb-1">Occupancy</p>
+                    <h2 class="mb-0" style="color: var(--secondary);"><span id="stat-occupancy">0</span>%</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8">
+                <div class="glass p-4 h-100">
+                    <h5 class="mb-4">Revenue <span class="text-gradient">Trends</span></h5>
+                    <canvas id="revenueChart" height="300"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="glass p-4 h-100">
+                    <h5 class="mb-4">Booking <span class="text-gradient">Status</span></h5>
+                    <canvas id="statusChart"></canvas>
                 </div>
             </div>
         </div>
 
         <div class="glass p-5">
-            <h3 class="mb-4">Recent <span class="text-gradient">Bookings</span></h3>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="mb-0">Recent <span class="text-gradient">Bookings</span></h3>
+                <button class="btn btn-outline-custom btn-sm" onclick="runCron()">
+                    <i class="fas fa-sync me-1"></i> Release Expired
+                </button>
+            </div>
             <div class="table-responsive">
                 <table class="table table-dark table-hover">
                     <thead>
@@ -82,19 +108,21 @@ $recent_bookings = $conn->query("SELECT b.*, u.name as user_name, s.slot_number
                     </thead>
                     <tbody>
                         <?php while($booking = $recent_bookings->fetch_assoc()): ?>
-                        <tr>
+                        <tr class="fade-in">
                             <td><?php echo $booking['user_name']; ?></td>
                             <td><span class="badge bg-primary"><?php echo $booking['slot_number']; ?></span></td>
                             <td><?php echo $booking['vehicle_number']; ?> (<?php echo $booking['vehicle_model']; ?>)</td>
                             <td><?php echo $booking['arrival_time']; ?></td>
                             <td><?php echo $booking['duration']; ?> hrs</td>
                             <td>
-                                <span class="badge bg-<?php echo $booking['status'] == 'Confirmed' ? 'success' : 'danger'; ?>">
+                                <span class="badge bg-<?php echo $booking['status'] == 'Confirmed' ? 'success' : ($booking['status'] == 'Completed' ? 'info' : 'danger'); ?>">
                                     <?php echo $booking['status']; ?>
                                 </span>
                             </td>
                             <td>
+                                <?php if($booking['status'] == 'Confirmed'): ?>
                                 <button class="btn btn-sm btn-outline-danger" onclick="cancelBooking(<?php echo $booking['id']; ?>)">Cancel</button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                         <?php endwhile; ?>
@@ -104,19 +132,90 @@ $recent_bookings = $conn->query("SELECT b.*, u.name as user_name, s.slot_number
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        async function cancelBooking(id) {
-            if (confirm('Are you sure you want to cancel this booking?')) {
-                const resp = await fetch('../api/admin_actions.php?action=cancel_booking&id=' + id);
-                const result = await resp.json();
-                if (result.success) {
-                    location.reload();
-                } else {
-                    alert(result.message);
+        async function loadAnalytics() {
+            const resp = await fetch('../api/get_analytics.php');
+            const data = await resp.json();
+
+            document.getElementById('stat-revenue').innerText = data.total_revenue.toLocaleString();
+            document.getElementById('stat-occupancy').innerText = data.occupancy_rate;
+
+            // Revenue Chart
+            const ctxRev = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctxRev, {
+                type: 'line',
+                data: {
+                    labels: data.revenue_chart.map(d => d.date),
+                    datasets: [{
+                        label: 'Revenue (₹)',
+                        data: data.revenue_chart.map(d => d.total),
+                        borderColor: '#00f2ff',
+                        backgroundColor: 'rgba(0, 242, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0a0' } },
+                        x: { grid: { display: false }, ticks: { color: '#a0a0a0' } }
+                    }
                 }
-            }
+            });
+
+            // Status Chart
+            const ctxStat = document.getElementById('statusChart').getContext('2d');
+            new Chart(ctxStat, {
+                type: 'doughnut',
+                data: {
+                    labels: data.status_distribution.map(d => d.status),
+                    datasets: [{
+                        data: data.status_distribution.map(d => d.count),
+                        backgroundColor: ['#00ff88', '#ff4b4b', '#00f2ff'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#a0a0a0', padding: 20 } }
+                    }
+                }
+            });
         }
+
+        async function runCron() {
+            const resp = await fetch('../api/cron_release_slots.php');
+            const result = await resp.json();
+            Swal.fire('Success', result.message, 'success').then(() => location.reload());
+        }
+
+        async function cancelBooking(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You want to cancel this booking?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff4b4b',
+                cancelButtonColor: 'rgba(255,255,255,0.1)',
+                confirmButtonText: 'Yes, cancel it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const resp = await fetch('../api/admin_actions.php?action=cancel_booking&id=' + id);
+                    const res = await resp.json();
+                    if (res.success) {
+                        Swal.fire('Cancelled!', 'Booking has been cancelled.', 'success').then(() => location.reload());
+                    }
+                }
+            });
+        }
+
+        loadAnalytics();
     </script>
 </body>
 </html>

@@ -64,17 +64,25 @@
                     <h4 class="mb-4">Filters</h4>
                     <div class="mb-4">
                         <label class="form-label text-muted small">Floor Level</label>
-                        <select class="form-control-custom w-100">
-                            <option>Floor 1 (B1)</option>
-                            <option>Floor 2 (B2)</option>
-                            <option>Floor 3 (B3)</option>
-                        </select>
+                        <div class="d-flex flex-column gap-2" id="floor-selector">
+                            <button class="floor-btn active" onclick="setFloor('B1')">Floor 1 (B1)</button>
+                            <button class="floor-btn" onclick="setFloor('B2')">Floor 2 (B2)</button>
+                            <button class="floor-btn" onclick="setFloor('B3')">Floor 3 (B3)</button>
+                        </div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label text-muted small">Vehicle Type</label>
                         <div class="d-flex gap-2">
-                            <button class="btn glass flex-grow-1 active"><i class="fas fa-car"></i></button>
-                            <button class="btn glass flex-grow-1"><i class="fas fa-motorcycle"></i></button>
+                            <button class="btn glass flex-grow-1 active" id="v-car" onclick="setVehicleType('Car')"><i class="fas fa-car"></i></button>
+                            <button class="btn glass flex-grow-1" id="v-bike" onclick="setVehicleType('Motorcycle')"><i class="fas fa-motorcycle"></i></button>
+                        </div>
+                    </div>
+                    <div id="selected-slot-info" class="mb-4 d-none">
+                        <div class="p-3 glass border-primary">
+                            <p class="small text-muted mb-1">Selected Slot</p>
+                            <h5 class="mb-0 text-gradient" id="display-slot-num">-</h5>
+                            <hr class="my-2 opacity-10">
+                            <p class="small text-muted mb-0">Rate: <span id="display-price">₹0</span>/hr</p>
                         </div>
                     </div>
                     <a href="booking.html" class="btn btn-primary-custom w-100 d-none" id="proceed-btn">Proceed to Booking</a>
@@ -98,38 +106,77 @@
     <script>
         const slotContainer = document.getElementById('slot-container');
         const proceedBtn = document.getElementById('proceed-btn');
+        const slotInfo = document.getElementById('selected-slot-info');
         let selectedSlotId = null;
+        let currentFloor = 'B1';
+        let currentVehicleType = 'Car';
+        let allSlots = [];
+
+        function setFloor(floor) {
+            currentFloor = floor;
+            document.querySelectorAll('.floor-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText.includes(floor));
+            });
+            renderSlots();
+        }
+
+        function setVehicleType(type) {
+            currentVehicleType = type;
+            document.getElementById('v-car').classList.toggle('active', type === 'Car');
+            document.getElementById('v-bike').classList.toggle('active', type === 'Motorcycle');
+            renderSlots();
+        }
 
         async function loadSlots() {
             try {
                 const response = await fetch('api/get_slots.php');
-                const slots = await response.json();
-                
-                slotContainer.innerHTML = '';
-                slots.forEach((slot, index) => {
-                    const slotDiv = document.createElement('div');
-                    const statusClass = slot.status.toLowerCase();
-                    slotDiv.className = `glass slot ${statusClass} fade-in`;
-                    slotDiv.style.animationDelay = `${index * 0.02}s`;
-                    slotDiv.innerHTML = `
-                        <i class="fas fa-car"></i>
-                        <span class="small fw-bold">${slot.slot_number}</span>
-                    `;
-
-                    if (slot.status === 'Available') {
-                        slotDiv.onclick = () => {
-                            document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
-                            slotDiv.classList.add('selected');
-                            selectedSlotId = slot.id;
-                            proceedBtn.classList.remove('d-none');
-                            proceedBtn.href = `booking.html?slot_id=${slot.id}&slot_num=${slot.slot_number}`;
-                        };
-                    }
-                    slotContainer.appendChild(slotDiv);
-                });
+                allSlots = await response.json();
+                renderSlots();
             } catch (error) {
                 console.error('Error loading slots:', error);
             }
+        }
+
+        function renderSlots() {
+            slotContainer.innerHTML = '';
+            document.querySelector('h5.mb-0').innerText = `Main Parking Area - ${currentFloor}`;
+            
+            const filteredSlots = allSlots.filter(s => s.floor === currentFloor && s.vehicle_type === currentVehicleType);
+            
+            if (filteredSlots.length === 0) {
+                slotContainer.innerHTML = '<div class="p-5 text-center text-muted w-100">No slots available for this criteria.</div>';
+                return;
+            }
+
+            filteredSlots.forEach((slot, index) => {
+                const slotDiv = document.createElement('div');
+                const statusClass = slot.status.toLowerCase();
+                const typeClass = slot.vehicle_type.toLowerCase();
+                
+                slotDiv.className = `glass slot ${statusClass} ${typeClass} fade-in`;
+                slotDiv.style.animationDelay = `${index * 0.02}s`;
+                slotDiv.innerHTML = `
+                    <i class="fas fa-${typeClass === 'car' ? 'car' : 'motorcycle'}"></i>
+                    <span class="small fw-bold">${slot.slot_number}</span>
+                    <span class="price-tag">₹${slot.price_per_hour}/hr</span>
+                `;
+
+                if (slot.status === 'Available') {
+                    slotDiv.onclick = () => {
+                        document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+                        slotDiv.classList.add('selected');
+                        selectedSlotId = slot.id;
+                        
+                        document.getElementById('display-slot-num').innerText = slot.slot_number;
+                        document.getElementById('display-price').innerText = `₹${slot.price_per_hour}`;
+                        
+                        slotInfo.classList.remove('d-none');
+                        proceedBtn.classList.remove('d-none');
+                        proceedBtn.href = `booking.html?slot_id=${slot.id}&slot_num=${slot.slot_number}&price=${slot.price_per_hour}`;
+                    };
+                }
+                slotContainer.appendChild(slotDiv);
+            });
         }
 
         async function checkAuth() {

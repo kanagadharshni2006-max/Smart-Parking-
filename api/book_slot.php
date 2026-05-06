@@ -1,3 +1,4 @@
+<?php
 session_start();
 header('Content-Type: application/json');
 require_once '../config.php';
@@ -22,7 +23,14 @@ $vehicle_number = $conn->real_escape_string($data['vehicle_number']);
 $vehicle_model = $conn->real_escape_string($data['vehicle_model'] ?? '');
 $arrival_time = $conn->real_escape_string($data['arrival_time']);
 $duration = (int)$data['duration'];
-$total_price = 15.00; // Fixed for demo, can be calculated
+
+// Fetch slot details for price
+$slot_res = $conn->query("SELECT price_per_hour FROM slots WHERE id = $slot_id");
+$slot_data = $slot_res->fetch_assoc();
+$total_price = $slot_data['price_per_hour'] * $duration;
+
+// Generate Unique Reference ID
+$reference_id = "SP" . strtoupper(substr(uniqid(), -6));
 
 // Start transaction
 $conn->begin_transaction();
@@ -37,8 +45,8 @@ try {
     }
 
     // 2. Insert into bookings
-    $insert_sql = "INSERT INTO bookings (user_id, slot_id, vehicle_number, vehicle_model, arrival_time, duration, total_price) 
-                   VALUES ($user_id, $slot_id, '$vehicle_number', '$vehicle_model', '$arrival_time', $duration, $total_price)";
+    $insert_sql = "INSERT INTO bookings (user_id, slot_id, reference_id, vehicle_number, vehicle_model, arrival_time, duration, total_price) 
+                   VALUES ($user_id, $slot_id, '$reference_id', '$vehicle_number', '$vehicle_model', '$arrival_time', $duration, $total_price)";
     $conn->query($insert_sql);
 
     $conn->commit();
