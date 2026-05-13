@@ -6,8 +6,8 @@
     --dark: #0a0b10;
     --card-bg: rgba(255, 255, 255, 0.05);
     --glass-border: rgba(255, 255, 255, 0.1);
-    --text-main: #e0e0e0;
-    --text-muted: #a0a0a0;
+    --text-main: #f8f9fa;
+    --text-muted: #c0c0c0;
     --accent-gradient: linear-gradient(135deg, var(--primary), var(--secondary));
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -38,6 +38,10 @@ body {
 h1, h2, h3, h4, h5 {
     font-weight: 700;
     letter-spacing: -0.5px;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
 }
 
 .text-gradient {
