@@ -62,21 +62,21 @@
 
                                 <h4 class="mb-4">Payment Method</h4>
                                 <div class="d-flex gap-3 mb-5">
-                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer border-primary">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer border-primary payment-method">
                                         <i class="fab fa-cc-visa fs-3 mb-2"></i>
                                         <div class="small">Credit Card</div>
                                     </div>
-                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer payment-method">
                                         <i class="fab fa-apple-pay fs-3 mb-2"></i>
                                         <div class="small">Apple Pay</div>
                                     </div>
-                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer payment-method">
                                         <i class="fab fa-google-pay fs-3 mb-2"></i>
                                         <div class="small">Google Pay</div>
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary-custom w-100">Confirm & Pay $15.00</button>
+                                <button type="submit" class="btn btn-primary-custom w-100" id="btn-total">Confirm & Pay $15.00</button>
                             </form>
                         </div>
                     </div>
@@ -99,23 +99,23 @@
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Base Rate</span>
-                                <span class="fw-bold">$10.00/hr</span>
+                                <span class="fw-bold" id="base-rate">$10.00/hr</span>
                             </div>
                             
                             <hr class="opacity-10 my-4">
                             
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">Subtotal</span>
-                                <span>$10.00</span>
+                                <span id="subtotal">$10.00</span>
                             </div>
                             <div class="d-flex justify-content-between mb-4">
                                 <span class="text-muted">Service Fee</span>
-                                <span>$5.00</span>
+                                <span id="service-fee">$5.00</span>
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center bg-white bg-opacity-10 p-3 rounded">
                                 <h4 class="mb-0">Total</h4>
-                                <h4 class="mb-0 text-gradient">$15.00</h4>
+                                <h4 class="mb-0 text-gradient" id="total-price">$15.00</h4>
                             </div>
 
                             <p class="text-muted small mt-4">
@@ -133,12 +133,48 @@
         const urlParams = new URLSearchParams(window.location.search);
         const slotId = urlParams.get('slot_id');
         const slotNum = urlParams.get('slot_num');
+        const slotPrice = parseFloat(urlParams.get('price')) || 10.00;
 
         if (!slotId) {
             window.location.href = 'slots.html';
         }
 
-        document.getElementById('display-slot-num').innerText = slotNum;
+        document.getElementById('display-slot-num').innerText = slotNum || 'N/A';
+
+        // Payment Method Selection
+        const paymentMethods = document.querySelectorAll('.payment-method');
+        paymentMethods.forEach(method => {
+            method.addEventListener('click', () => {
+                paymentMethods.forEach(m => m.classList.remove('border-primary'));
+                method.classList.add('border-primary');
+            });
+        });
+
+        // Dynamic Price Calculation
+        const durationSelect = document.getElementById('duration');
+        const baseRateDisplay = document.getElementById('base-rate');
+        const subtotalDisplay = document.getElementById('subtotal');
+        const serviceFeeDisplay = document.getElementById('service-fee');
+        const totalDisplay = document.getElementById('total-price');
+        const btnTotalDisplay = document.getElementById('btn-total');
+
+        function updatePrice() {
+            const duration = parseInt(durationSelect.value) || 1;
+            const subtotal = slotPrice * duration;
+            const serviceFee = 5.00;
+            const total = subtotal + serviceFee;
+
+            if (baseRateDisplay) baseRateDisplay.innerText = `$${slotPrice.toFixed(2)}/hr`;
+            if (subtotalDisplay) subtotalDisplay.innerText = `$${subtotal.toFixed(2)}`;
+            if (serviceFeeDisplay) serviceFeeDisplay.innerText = `$${serviceFee.toFixed(2)}`;
+            if (totalDisplay) totalDisplay.innerText = `$${total.toFixed(2)}`;
+            if (btnTotalDisplay) btnTotalDisplay.innerText = `Confirm & Pay $${total.toFixed(2)}`;
+        }
+
+        if (durationSelect) {
+            durationSelect.addEventListener('change', updatePrice);
+        }
+        updatePrice();
 
         document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
