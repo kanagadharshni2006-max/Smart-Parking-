@@ -182,8 +182,8 @@
 
                         <div class="text-start bg-dark p-3 rounded-4 mb-4" style="border: 1px solid rgba(255,255,255,0.05);">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="bg-white rounded p-1">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/SBI-logo.svg/2048px-SBI-logo.svg.png" width="24" height="24" style="object-fit: contain;">
+                                <div class="bg-white rounded p-1 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-university text-primary fs-5"></i>
                                 </div>
                                 <div>
                                     <p class="mb-0 fw-bold small">State Bank of India</p>
@@ -204,7 +204,7 @@
                                 <p class="mb-0 small text-muted">State Bank of India</p>
                                 <p class="mb-0 fw-bold" id="gpay-pin-amount">₹15.00</p>
                             </div>
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/UPI-Logo-vector.svg/1024px-UPI-Logo-vector.svg.png" width="40">
+                            <div class="fw-bold" style="color: #666; font-style: italic; font-size: 1.2rem;">UPI</div>
                         </div>
 
                         <h6 class="mb-4 text-muted" style="font-size: 0.8rem;">ENTER 4-DIGIT UPI PIN</h6>
@@ -322,7 +322,9 @@
             }
 
             if (selectedMethod === 'gpay') {
-                gpayModalInstance = new bootstrap.Modal(document.getElementById('gpayModal'));
+                if (!gpayModalInstance) {
+                    gpayModalInstance = new bootstrap.Modal(document.getElementById('gpayModal'));
+                }
                 document.getElementById('gpay-step-1').classList.remove('d-none');
                 document.getElementById('gpay-step-2').classList.add('d-none');
                 gpayModalInstance.show();
