@@ -50,7 +50,12 @@ try {
     $conn->query($insert_sql);
 
     $conn->commit();
-    echo json_encode(['success' => true, 'message' => 'Booking confirmed!']);
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Booking confirmed!',
+        'reference_id' => $reference_id,
+        'total_price' => $total_price
+    ]);
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);

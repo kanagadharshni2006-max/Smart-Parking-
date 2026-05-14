@@ -376,13 +376,27 @@
 
                     const result = await response.json();
                     if (result.success) {
+                        const durationText = document.getElementById('duration').options[document.getElementById('duration').selectedIndex].text;
+                        const receiptHtml = `
+                            <div class="text-start mt-3 p-3 rounded border" style="background: rgba(0,0,0,0.03);">
+                                <p class="mb-2"><small class="text-muted">Reference ID:</small> <strong class="float-end text-primary">${result.reference_id}</strong></p>
+                                <p class="mb-2"><small class="text-muted">Slot:</small> <strong class="float-end">${document.getElementById('display-slot-num').innerText}</strong></p>
+                                <p class="mb-2"><small class="text-muted">Duration:</small> <strong class="float-end">${durationText}</strong></p>
+                                <hr class="my-2">
+                                <p class="mb-0 fs-5"><small class="text-muted">Paid:</small> <strong class="float-end text-success">$${parseFloat(result.total_price).toFixed(2)}</strong></p>
+                            </div>
+                            <p class="text-muted small mt-3 mb-0">Show this receipt to the parking attendant if required.</p>
+                        `;
+
                         Swal.fire({
                             title: 'Payment Successful!',
-                            text: 'Your parking slot has been booked.',
+                            html: receiptHtml,
                             icon: 'success',
-                            confirmButtonText: 'Great!'
+                            confirmButtonText: '<i class="fas fa-check-circle me-1"></i> Done',
+                            confirmButtonColor: '#7000ff',
+                            allowOutsideClick: false
                         }).then(() => {
-                            window.location.href = 'slots.html';
+                            window.location.href = 'history.html';
                         });
                     } else {
                         btn.innerHTML = originalText;
