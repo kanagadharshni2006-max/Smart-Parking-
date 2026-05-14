@@ -62,18 +62,46 @@
 
                                 <h4 class="mb-4">Payment Method</h4>
                                 <div class="d-flex gap-3 mb-5">
-                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer border-primary payment-method">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer border-primary payment-method" data-method="cc">
                                         <i class="fab fa-cc-visa fs-3 mb-2"></i>
                                         <div class="small">Credit Card</div>
                                     </div>
-                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer payment-method">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer payment-method" data-method="apple">
                                         <i class="fab fa-apple-pay fs-3 mb-2"></i>
                                         <div class="small">Apple Pay</div>
                                     </div>
-                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer payment-method">
+                                    <div class="glass p-3 flex-grow-1 text-center cursor-pointer payment-method" data-method="gpay">
                                         <i class="fab fa-google-pay fs-3 mb-2"></i>
                                         <div class="small">Google Pay</div>
                                     </div>
+                                </div>
+
+                                <!-- Dynamic Payment Details -->
+                                <div id="cc-details" class="mb-5 fade-in">
+                                    <div class="mb-3">
+                                        <label class="form-label text-muted small">Card Number</label>
+                                        <input type="text" class="form-control-custom w-100" placeholder="0000 0000 0000 0000" id="cc-number">
+                                    </div>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small">Expiry Date</label>
+                                            <input type="text" class="form-control-custom w-100" placeholder="MM/YY" id="cc-expiry">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label text-muted small">CVV</label>
+                                            <input type="password" class="form-control-custom w-100" placeholder="123" id="cc-cvv">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="apple-details" class="mb-5 text-center d-none fade-in">
+                                    <i class="fab fa-apple fs-1 mb-2"></i>
+                                    <p class="text-muted mb-0">Double-click side button to authenticate</p>
+                                </div>
+
+                                <div id="gpay-details" class="mb-5 text-center d-none fade-in">
+                                    <i class="fab fa-google-pay fs-1 text-primary mb-2"></i>
+                                    <p class="text-muted mb-0">Proceed to enter UPI PIN securely</p>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary-custom w-100" id="btn-total">Confirm & Pay $15.00</button>
@@ -128,6 +156,29 @@
         </div>
     </div>
 
+    <!-- GPay UPI PIN Modal -->
+    <div class="modal fade" id="gpayModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content glass" style="background: rgba(10, 11, 16, 0.98);">
+                <div class="modal-body p-4 text-center">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png" alt="Google" width="40" class="mb-3">
+                    <h5 class="mb-4">Enter UPI PIN</h5>
+                    <div class="d-flex justify-content-center gap-2 mb-4">
+                        <input type="password" class="form-control-custom text-center p-2 upi-pin-input" maxlength="1" style="width: 40px; height: 40px; font-size: 1.5rem;" autofocus>
+                        <input type="password" class="form-control-custom text-center p-2 upi-pin-input" maxlength="1" style="width: 40px; height: 40px; font-size: 1.5rem;">
+                        <input type="password" class="form-control-custom text-center p-2 upi-pin-input" maxlength="1" style="width: 40px; height: 40px; font-size: 1.5rem;">
+                        <input type="password" class="form-control-custom text-center p-2 upi-pin-input" maxlength="1" style="width: 40px; height: 40px; font-size: 1.5rem;">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary w-50" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary-custom w-50 p-2" id="submitGpayBtn">Submit</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -143,10 +194,35 @@
 
         // Payment Method Selection
         const paymentMethods = document.querySelectorAll('.payment-method');
+        let selectedMethod = 'cc';
+
         paymentMethods.forEach(method => {
             method.addEventListener('click', () => {
                 paymentMethods.forEach(m => m.classList.remove('border-primary'));
                 method.classList.add('border-primary');
+                selectedMethod = method.getAttribute('data-method');
+                
+                // Toggle Details
+                document.getElementById('cc-details').classList.add('d-none');
+                document.getElementById('apple-details').classList.add('d-none');
+                document.getElementById('gpay-details').classList.add('d-none');
+                
+                document.getElementById(`${selectedMethod}-details`).classList.remove('d-none');
+            });
+        });
+
+        // UPI PIN Auto-advance
+        const upiInputs = document.querySelectorAll('.upi-pin-input');
+        upiInputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if(e.target.value.length === 1 && index < upiInputs.length - 1) {
+                    upiInputs[index + 1].focus();
+                }
+            });
+            input.addEventListener('keydown', (e) => {
+                if(e.key === 'Backspace' && e.target.value === '' && index > 0) {
+                    upiInputs[index - 1].focus();
+                }
             });
         });
 
@@ -176,8 +252,45 @@
         }
         updatePrice();
 
+        let gpayModalInstance = null;
+
         document.getElementById('booking-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            if(selectedMethod === 'cc') {
+                if(!document.getElementById('cc-number').value || !document.getElementById('cc-cvv').value) {
+                    Swal.fire('Error', 'Please enter your credit card details.', 'warning');
+                    return;
+                }
+            }
+
+            if (selectedMethod === 'gpay') {
+                gpayModalInstance = new bootstrap.Modal(document.getElementById('gpayModal'));
+                gpayModalInstance.show();
+                // Reset PIN
+                upiInputs.forEach(i => i.value = '');
+                setTimeout(() => upiInputs[0].focus(), 500);
+                return;
+            }
+
+            processPayment();
+        });
+
+        document.getElementById('submitGpayBtn').addEventListener('click', () => {
+            const pin = Array.from(upiInputs).map(i => i.value).join('');
+            if(pin.length < 4) {
+                Swal.fire('Error', 'Please enter your 4-digit UPI PIN', 'warning');
+                return;
+            }
+            gpayModalInstance.hide();
+            processPayment();
+        });
+
+        async function processPayment() {
+            const btn = document.getElementById('btn-total');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            btn.disabled = true;
             
             const formData = {
                 slot_id: slotId,
@@ -187,30 +300,37 @@
                 duration: document.getElementById('duration').value
             };
 
-            try {
-                const response = await fetch('api/book_slot.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    Swal.fire({
-                        title: 'Success!',
-                        text: 'Your parking slot has been booked.',
-                        icon: 'success',
-                        confirmButtonText: 'Great!'
-                    }).then(() => {
-                        window.location.href = 'slots.html';
+            // Simulate real-time payment gateway delay
+            setTimeout(async () => {
+                try {
+                    const response = await fetch('api/book_slot.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
                     });
-                } else {
-                    Swal.fire('Error', result.message, 'error');
+
+                    const result = await response.json();
+                    if (result.success) {
+                        Swal.fire({
+                            title: 'Payment Successful!',
+                            text: 'Your parking slot has been booked.',
+                            icon: 'success',
+                            confirmButtonText: 'Great!'
+                        }).then(() => {
+                            window.location.href = 'slots.html';
+                        });
+                    } else {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        Swal.fire('Error', result.message, 'error');
+                    }
+                } catch (error) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    Swal.fire('Error', 'Something went wrong!', 'error');
                 }
-            } catch (error) {
-                Swal.fire('Error', 'Something went wrong!', 'error');
-            }
-        });
+            }, 2000);
+        }
     </script>
 </body>
 </html>
