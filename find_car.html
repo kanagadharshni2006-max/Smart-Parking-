@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find My Car | SmartPark</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .map-container {
+            width: 100%;
+            overflow: auto;
+            background: #0f1019;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            padding: 20px;
+        }
+        
+        /* Map SVG styling */
+        svg.parking-map {
+            width: 100%;
+            min-width: 700px;
+            height: auto;
+        }
+
+        .map-slot {
+            fill: transparent;
+            stroke: var(--glass-border);
+            stroke-width: 1.5;
+            transition: all 0.3s ease;
+        }
+
+        .map-slot.available {
+            fill: rgba(0, 255, 136, 0.05);
+            stroke: rgba(0, 255, 136, 0.4);
+        }
+
+        .map-slot.occupied {
+            fill: rgba(255, 75, 75, 0.05);
+            stroke: rgba(255, 75, 75, 0.4);
+        }
+
+        .map-slot.target {
+            fill: rgba(112, 0, 255, 0.15);
+            stroke: var(--secondary);
+            stroke-width: 3;
+            filter: drop-shadow(0 0 8px var(--secondary));
+        }
+
+        .map-text {
+            fill: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-anchor: middle;
+            font-family: 'Outfit', sans-serif;
+            pointer-events: none;
+        }
+
+        .map-text.target-text {
+            fill: white;
+            font-weight: 800;
+        }
+
+        .navigation-path {
+            stroke: var(--primary);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 8 8;
+            fill: none;
+            animation: dash 30s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        .pulse-marker {
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                r: 6px;
+                opacity: 0.7;
+            }
+            100% {
+                r: 12px;
+                opacity: 1;
+                filter: drop-shadow(0 0 10px var(--primary));
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg scrolled">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-parking text-gradient me-2"></i>SmartPark
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto" id="nav-links">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="slots.html">Find Slots</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="find_car.html">Find My Car</a></li>
+                    <li class="nav-item" id="auth-link"><a class="nav-link" href="auth.html">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5 mt-5">
+        <div class="text-center mb-5 fade-in">
+            <h1 class="display-5">Find My <span class="text-gradient">Car</span></h1>
+            <p class="text-muted">Enter your booking details to locate your parked vehicle on the map.</p>
+        </div>
+
+        <div class="row justify-content-center g-4">
+            <!-- Search Side -->
+            <div class="col-lg-4 fade-in" style="animation-delay: 0.1s;">
+                <div class="glass p-4 sticky-top" style="top: 100px;">
+                    <h4 class="mb-4 text-gradient"><i class="fas fa-search me-2"></i>Locate Vehicle</h4>
+                    
+                    <form id="find-car-form" onsubmit="searchVehicle(event)">
+                        <div class="mb-4">
+                            <label class="form-label text-muted small">License Plate or Reference ID</label>
+                            <input type="text" id="search-query" class="form-control-custom w-100" placeholder="e.g. MH-12-AB-1234 or SP12345" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom w-100 py-3"><i class="fas fa-location-crosshairs me-2"></i>Locate Vehicle</button>
+                    </form>
+
+                    <!-- User Active Bookings Dropdown (shown when logged in) -->
+                    <div id="active-bookings-section" class="mt-4 d-none">
+                        <label class="form-label text-muted small">Your Active Bookings</label>
+                        <select id="user-active-bookings" class="form-control-custom w-100 py-2" onchange="selectActiveBooking(this.value)">
+                            <option value="">-- Choose Active Booking --</option>
+                        </select>
+                    </div>
+
+                    <!-- Booking Info Details -->
+                    <div id="vehicle-details-card" class="mt-4 d-none">
+                        <hr class="opacity-10 my-3">
+                        <div class="p-3 glass border-primary" style="background: rgba(0, 242, 255, 0.02);">
+                            <span class="badge bg-primary mb-2" id="info-status">Confirmed</span>
+                            <h5 class="mb-2 text-gradient" id="info-slot-num">-</h5>
+                            
+                            <p class="small text-muted mb-1">Floor: <strong class="float-end text-white" id="info-floor">-</strong></p>
+                            <p class="small text-muted mb-1">Vehicle: <strong class="float-end text-white" id="info-vehicle">-</strong></p>
+                            <p class="small text-muted mb-1">Model: <strong class="float-end text-white" id="info-model">-</strong></p>
+                            <p class="small text-muted mb-1">Ref ID: <strong class="float-end text-white" id="info-ref">-</strong></p>
+                            
+                            <div class="mt-3 p-2 bg-white bg-opacity-5 rounded border border-secondary border-opacity-20">
+                                <p class="small mb-0 text-muted" style="font-size: 0.72rem; line-height: 1.3;">
+                                    <i class="fas fa-person-walking text-primary me-1"></i> <span id="walking-directions">Take elevator to Floor, turn left.</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Side -->
+            <div class="col-lg-8 fade-in" style="animation-delay: 0.2s;">
+                <div class="glass p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0 text-gradient"><i class="fas fa-map-marked-alt me-2"></i>Parking Grid Map</h4>
+                        <!-- Floor Switcher -->
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm glass border-secondary py-1 px-3 active" id="btn-map-B1" onclick="switchMapFloor('B1')">B1</button>
+                            <button class="btn btn-sm glass border-secondary py-1 px-3" id="btn-map-B2" onclick="switchMapFloor('B2')">B2</button>
+                            <button class="btn btn-sm glass border-secondary py-1 px-3" id="btn-map-B3" onclick="switchMapFloor('B3')">B3</button>
+                        </div>
+                    </div>
+
+                    <div class="map-container">
+                        <!-- SVG Parking Layout -->
+                        <svg viewBox="0 0 800 400" class="parking-map">
+                            <!-- Background Grid Elements -->
+                            <rect x="0" y="0" width="800" height="400" fill="#0b0c13" rx="15"></rect>
+                            
+                            <!-- Central Corridor -->
+                            <rect x="50" y="160" width="700" height="80" fill="#141724" opacity="0.8" rx="10"></rect>
+                            <line x1="50" y1="200" x2="750" y2="200" stroke="#2a3048" stroke-dasharray="10 5" stroke-width="2"></line>
+                            
+                            <!-- Lobby/Elevator Area -->
+                            <g transform="translate(30, 150)">
+                                <rect x="0" y="0" width="70" height="100" fill="#191c2e" rx="10" stroke="var(--glass-border)"></rect>
+                                <text x="35" y="45" fill="var(--primary)" font-size="16" text-anchor="middle" font-family="'Outfit'"><i class="fas fa-elevator"></i></text>
+                                <text x="35" y="70" fill="var(--text-muted)" font-size="10" text-anchor="middle">LOBBY</text>
+                                <text x="35" y="85" fill="var(--text-muted)" font-size="9" text-anchor="middle">ELEVATOR</text>
+                            </g>
+
+                            <!-- Top Row Slots (B1-01 to B1-06) -->
+                            <!-- Slot 1 -->
+                            <rect id="slot-rect-1" x="120" y="30" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-1" x="160" y="90" class="map-text">Slot 01</text>
+
+                            <!-- Slot 2 -->
+                            <rect id="slot-rect-2" x="220" y="30" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-2" x="260" y="90" class="map-text">Slot 02</text>
+
+                            <!-- Slot 3 -->
+                            <rect id="slot-rect-3" x="320" y="30" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-3" x="360" y="90" class="map-text">Slot 03</text>
+
+                            <!-- Slot 4 -->
+                            <rect id="slot-rect-4" x="420" y="30" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-4" x="460" y="90" class="map-text">Slot 04</text>
+
+                            <!-- Slot 5 -->
+                            <rect id="slot-rect-5" x="520" y="30" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-5" x="560" y="90" class="map-text">Slot 05</text>
+
+                            <!-- Slot 6 -->
+                            <rect id="slot-rect-6" x="620" y="30" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-6" x="660" y="90" class="map-text">Slot 06</text>
+
+                            <!-- Bottom Row Slots (B1-07 to B1-12) -->
+                            <!-- Slot 7 -->
+                            <rect id="slot-rect-7" x="120" y="260" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-7" x="160" y="320" class="map-text">Slot 07</text>
+
+                            <!-- Slot 8 -->
+                            <rect id="slot-rect-8" x="220" y="260" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-8" x="260" y="320" class="map-text">Slot 08</text>
+
+                            <!-- Slot 9 -->
+                            <rect id="slot-rect-9" x="320" y="260" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-9" x="360" y="320" class="map-text">Slot 09</text>
+
+                            <!-- Slot 10 -->
+                            <rect id="slot-rect-10" x="420" y="260" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-10" x="460" y="320" class="map-text">Slot 10</text>
+
+                            <!-- Slot 11 -->
+                            <rect id="slot-rect-11" x="520" y="260" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-11" x="560" y="320" class="map-text">Slot 11</text>
+
+                            <!-- Slot 12 -->
+                            <rect id="slot-rect-12" x="620" y="260" width="80" height="110" class="map-slot" rx="8"></rect>
+                            <text id="slot-text-12" x="660" y="320" class="map-text">Slot 12</text>
+
+                            <!-- Navigation Path line -->
+                            <path id="nav-path" d="" class="navigation-path d-none"></path>
+
+                            <!-- Start pulse marker (Elevator) -->
+                            <circle id="start-marker" cx="65" cy="200" r="8" fill="var(--primary)" class="pulse-marker d-none"></circle>
+
+                            <!-- Target bubble marker (Slot) -->
+                            <circle id="target-marker" cx="0" cy="0" r="8" fill="var(--secondary)" class="pulse-marker d-none" style="filter: drop-shadow(0 0 10px var(--secondary));"></circle>
+                        </svg>
+                    </div>
+                    
+                    <div class="mt-4 p-3 glass border-secondary border-opacity-30">
+                        <div class="row text-center g-2 small text-muted">
+                            <div class="col-4">
+                                <i class="fas fa-elevator text-primary me-2"></i> Start at Lobby elevator
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-arrow-right-long text-primary me-2"></i> Follow dotted path
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-car-side text-secondary me-2"></i> Find your vehicle highlighted
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS & SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let currentMapFloor = 'B1';
+        let foundVehicleBooking = null;
+
+        async function checkAuth() {
+            const resp = await fetch('api/auth.php?action=check');
+            const user = await resp.json();
+            
+            if (user.logged_in) {
+                const authLink = document.getElementById('auth-link');
+                authLink.innerHTML = `<a class="nav-link" href="history.html">My Bookings</a>`;
+                
+                const nav = document.getElementById('nav-links');
+                nav.insertAdjacentHTML('beforeend', `<li class="nav-item"><a class="nav-link text-danger" href="api/auth.php?action=logout">Logout</a></li>`);
+                
+                // Fetch User active bookings to populate selection
+                fetchUserBookings();
+            }
+        }
+
+        async function fetchUserBookings() {
+            const resp = await fetch('api/get_history.php');
+            const bookings = await resp.json();
+            const activeBookings = bookings.filter(b => b.status === 'Confirmed');
+
+            if (activeBookings.length > 0) {
+                const section = document.getElementById('active-bookings-section');
+                const dropdown = document.getElementById('user-active-bookings');
+                
+                section.classList.remove('d-none');
+                activeBookings.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.reference_id;
+                    opt.text = `${b.slot_number} - ${b.vehicle_number} (${b.vehicle_model})`;
+                    dropdown.appendChild(opt);
+                });
+            }
+        }
+
+        function selectActiveBooking(refId) {
+            if (!refId) return;
+            document.getElementById('search-query').value = refId;
+            locateVehicle(refId);
+        }
+
+        function searchVehicle(e) {
+            e.preventDefault();
+            const query = document.getElementById('search-query').value.trim();
+            locateVehicle(query);
+        }
+
+        async function locateVehicle(query) {
+            try {
+                const resp = await fetch(`api/find_vehicle.php?query=${encodeURIComponent(query)}`);
+                const data = await resp.json();
+
+                if (data.success) {
+                    foundVehicleBooking = data.booking;
+                    renderDetailsCard(data.booking);
+                    switchMapFloor(data.booking.floor);
+                    
+                    Swal.fire({
+                        title: 'Vehicle Located!',
+                        text: `Your vehicle is parked in slot ${data.booking.slot_number} on ${data.booking.floor}.`,
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Not Found',
+                        text: data.message,
+                        icon: 'warning',
+                        confirmButtonColor: '#7000ff'
+                    });
+                    resetMap();
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function renderDetailsCard(booking) {
+            const card = document.getElementById('vehicle-details-card');
+            card.classList.remove('d-none');
+
+            document.getElementById('info-status').innerText = booking.status;
+            document.getElementById('info-slot-num').innerText = booking.slot_number;
+            document.getElementById('info-floor').innerText = booking.floor === 'B1' ? 'Basement 1' : (booking.floor === 'B2' ? 'Basement 2' : 'Basement 3');
+            document.getElementById('info-vehicle').innerText = booking.vehicle_number;
+            document.getElementById('info-model').innerText = booking.vehicle_model || 'N/A';
+            document.getElementById('info-ref').innerText = booking.reference_id;
+
+            // Generate walking directions text
+            const slotIdx = parseInt(booking.slot_number.split('-')[1]);
+            const side = slotIdx <= 6 ? 'LEFT' : 'RIGHT';
+            const floorName = booking.floor === 'B1' ? 'Basement 1' : (booking.floor === 'B2' ? 'Basement 2' : 'Basement 3');
+            
+            document.getElementById('walking-directions').innerHTML = `
+                Exit the Lobby elevator on <strong>${floorName}</strong>. Walk down the central corridor, then turn <strong>${side === 'LEFT' ? 'left' : 'right'}</strong>. Your vehicle is parked in Slot <strong>${booking.slot_number}</strong>. (Walk distance: ${slotIdx * 8} meters)
+            `;
+        }
+
+        function switchMapFloor(floor) {
+            currentMapFloor = floor;
+            
+            // Toggle active floor switcher buttons
+            document.querySelectorAll('[id^="btn-map-"]').forEach(btn => {
+                btn.classList.toggle('active', btn.id.includes(floor));
+            });
+
+            // Re-render map elements
+            renderMapGrid();
+        }
+
+        function renderMapGrid() {
+            // Reset all map slots styling
+            for (let i = 1; i <= 12; i++) {
+                const rect = document.getElementById(`slot-rect-${i}`);
+                const text = document.getElementById(`slot-text-${i}`);
+                
+                rect.className.baseVal = "map-slot available";
+                rect.style.filter = '';
+                text.className.baseVal = "map-text";
+                text.textContent = `${currentMapFloor}-${i < 10 ? '0' + i : i}`;
+            }
+
+            // Hide markers & path
+            document.getElementById('nav-path').classList.add('d-none');
+            document.getElementById('start-marker').classList.add('d-none');
+            document.getElementById('target-marker').classList.add('d-none');
+
+            // If we have a located vehicle AND it is on the current floor, highlight it
+            if (foundVehicleBooking && foundVehicleBooking.floor === currentMapFloor) {
+                const slotNumStr = foundVehicleBooking.slot_number; // e.g. B1-04
+                const slotIdx = parseInt(slotNumStr.split('-')[1]); // e.g. 4
+                
+                const rect = document.getElementById(`slot-rect-${slotIdx}`);
+                const text = document.getElementById(`slot-text-${slotIdx}`);
+                
+                rect.className.baseVal = "map-slot target";
+                text.className.baseVal = "map-text target-text";
+
+                // Draw walking path
+                // Slot X is: 120 + (idx-1)*100 + 40 (center of slot)
+                const slotX = 120 + (slotIdx - 1) % 6 * 100 + 40;
+                const slotY = slotIdx <= 6 ? 140 : 260; // exit point of slot into central corridor
+
+                const pathEl = document.getElementById('nav-path');
+                // Lobby Elevator exit is at x=65, y=200.
+                // We go from (65, 200) -> (slotX, 200) -> (slotX, slotY)
+                pathEl.setAttribute('d', `M 65 200 L ${slotX} 200 L ${slotX} ${slotY}`);
+                pathEl.classList.remove('d-none');
+
+                // Place markers
+                document.getElementById('start-marker').classList.remove('d-none');
+                
+                const targetMarker = document.getElementById('target-marker');
+                targetMarker.setAttribute('cx', slotX);
+                targetMarker.setAttribute('cy', slotY);
+                targetMarker.classList.remove('d-none');
+            }
+        }
+
+        function resetMap() {
+            foundVehicleBooking = null;
+            document.getElementById('vehicle-details-card').classList.add('d-none');
+            renderMapGrid();
+        }
+
+        checkAuth();
+        renderMapGrid();
+    </script>
+</body>
+</html>

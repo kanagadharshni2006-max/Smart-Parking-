@@ -45,7 +45,8 @@ elseif ($action == 'login') {
 }
 elseif ($action == 'logout') {
     session_destroy();
-    echo json_encode(['success' => true]);
+    header('Location: ../index.html');
+    exit;
 }
 elseif ($action == 'check') {
     if (isset($_SESSION['user_id'])) {
